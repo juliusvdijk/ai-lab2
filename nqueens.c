@@ -7,7 +7,7 @@
 #include <string.h>
 
 #define MAXQ 100
-#define POPULATION_SIZE 20
+#define POPULATION_SIZE 10
 #define FALSE 0
 #define TRUE  1
 
@@ -158,27 +158,36 @@ void loadState(int* successor){
 }
 
 int nextSuccessor() {
-	int oldStateScore = evaluateState();
-	int bestNextScore = 0;
-	int* bestNextState = malloc(sizeof(int) * nqueens);
+	int score = evaluateState();
+    int moveQueenIdx = -1;
+    int moveQueenNewPos = 0;
 
-	for (int i = 0; i < nqueens; i++) {
-		int oldValue = queens[i];
-		queens[i] = rand() % nqueens;
-		int newScore = evaluateState();
-		if (newScore > bestNextScore && newScore > oldStateScore) {
-			bestNextScore = newScore;
-			saveState(bestNextState);
-		}
-		queens[i] = oldValue;
-	}
-	
-	if (bestNextScore != 0) {
-		loadState(bestNextState);
-		return bestNextScore;
-	}
-	
-	return oldStateScore;
+    for (int i = 0; i < nqueens; i++) {
+        int pos = queens[i];
+
+        for (int nextPos = 0; nextPos < nqueens; nextPos++) {
+            if (nextPos == pos) continue;
+
+            queens[i] = nextPos;
+            int newScore = evaluateState();
+            if (newScore > score || (newScore == score && (rand() % nqueens == 0 || moveQueenIdx == -1))) {
+                score = newScore;
+                moveQueenIdx = i;
+                moveQueenNewPos = nextPos;
+            }
+        }
+
+        // Reset move
+        queens[i] = pos;
+    }
+
+    if (moveQueenIdx == -1) {
+        // No change
+        return 0;
+    } else {
+        queens[moveQueenIdx] = moveQueenNewPos;
+        return 1;
+    }
 }
 
 //int nextSuccessor(){
@@ -303,18 +312,16 @@ void hillClimbing() {
 
 
 void hillClimbing() {
-	printf("Try: 1");
-	int eval, newEval;
+	int eval, i;
 	eval = nextSuccessor();
-	for(int i = 2; eval != ((nqueens-1)*nqueens/2) ; i++){
-		newEval = nextSuccessor();
-		if (eval == newEval) {
-			initiateQueens(1);
-			newEval = evaluateState();
+	for(i = 2; eval != ((nqueens-1)*nqueens/2) ; i++){
+		if (nextSuccessor() == 0) {
+			// Random restart
+            initiateQueens(1);
 		}
-		eval = newEval;
+		eval = evaluateState();
 	}
-	printf ("Solved puzzle.\n");
+	printf ("Solved puzzle in %d iterations.\n", i);
 	printf ("Final state is");
 	printState();
 
@@ -405,7 +412,7 @@ void geneticAlgorithm() {
             break;
         }
 
-        // Do 8 crossovers and keep the 2 most fit ones
+        // Keep the 2 most fit ones
         // Copy first 2
         for (int i = 0; i < 2; i++) {
             memcpy(nextPopulation[i].queens, currentPopulation[i].queens, sizeof(int) * nqueens);
