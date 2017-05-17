@@ -170,7 +170,8 @@ int nextSuccessor() {
 
             queens[i] = nextPos;
             int newScore = evaluateState();
-            if (newScore > score || (newScore == score && (rand() % nqueens == 0 || moveQueenIdx == -1))) {
+            // We have a 10% chance to throw away the current best move if the score is equal
+            if (newScore > score || (newScore == score && (moveQueenIdx == -1 || rand() < (RAND_MAX / 10)))) {
                 score = newScore;
                 moveQueenIdx = i;
                 moveQueenNewPos = nextPos;
