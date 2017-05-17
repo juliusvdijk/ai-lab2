@@ -4,9 +4,10 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
+#include <string.h>
 
 #define MAXQ 100
-
+#define POPULATION_SIZE 20
 #define FALSE 0
 #define TRUE  1
 
@@ -30,7 +31,7 @@ void initializeRandomGenerator() {
 void initiateQueens(int flag) {
   int q;
   for (q = 0; q < nqueens; q++) {
-    queens[q] = (flag == 0? 0 : random()%nqueens); 
+    queens[q] = (flag == 0? 0 : rand()%nqueens);
   }
 }
 
@@ -180,44 +181,44 @@ int nextSuccessor() {
 	return oldStateScore;
 }
 
-int nextSuccessor(){
-	int currentState = evaluateState();
-	int bestNextState = 0;
-	int* bestSuccessor = malloc(sizeof(int) * nqueens);
-	int oldQueenPosition, eval;
-	int foundNextSuccessor = 1;
-	
-	saveState(bestSuccessor);
-	while(bestNextState){
-		//printf("|");
-		bestNextState = 0;
-		foundNextSuccessor = 0;
-		loadState(bestSuccessor);
-		for(int i = 0; i < nqueens; i++){
-			oldQueenPosition = queens[i];
-			// making sure the position of the next successor is different 
-			while(queens[i] == oldQueenPosition){
-				queens[i] = (rand() % nqueens);
-			}
-			eval = evaluateState();
-			if(eval > bestNextState && eval > currentState){
-				bestNextState = eval;
-				saveState(bestSuccessor);
-			}
-			else if(eval == bestNextState && (rand() % 2)){
-				saveState(bestSuccessor);
-				bestNextState = eval;
-			}
-			queens[i] = oldQueenPosition;
-		}
-		if(bestNextState > currentState){
-			currentState = bestNextState;
-		}
-	}
-	
-//printState();
-return(eval);
-}
+//int nextSuccessor(){
+//	int currentState = evaluateState();
+//	int bestNextState = 0;
+//	int* bestSuccessor = malloc(sizeof(int) * nqueens);
+//	int oldQueenPosition, eval;
+//	int foundNextSuccessor = 1;
+//
+//	saveState(bestSuccessor);
+//	while(bestNextState){
+//		//printf("|");
+//		bestNextState = 0;
+//		foundNextSuccessor = 0;
+//		loadState(bestSuccessor);
+//		for(int i = 0; i < nqueens; i++){
+//			oldQueenPosition = queens[i];
+//			// making sure the position of the next successor is different
+//			while(queens[i] == oldQueenPosition){
+//				queens[i] = (rand() % nqueens);
+//			}
+//			eval = evaluateState();
+//			if(eval > bestNextState && eval > currentState){
+//				bestNextState = eval;
+//				saveState(bestSuccessor);
+//			}
+//			else if(eval == bestNextState && (rand() % 2)){
+//				saveState(bestSuccessor);
+//				bestNextState = eval;
+//			}
+//			queens[i] = oldQueenPosition;
+//		}
+//		if(bestNextState > currentState){
+//			currentState = bestNextState;
+//		}
+//	}
+//
+////printState();
+//return(eval);
+//}
 
 /*************************************************************/
 
@@ -325,6 +326,115 @@ void simulatedAnnealing() {
   printf("Implement the routine simulatedAnnealing() yourself!!\n");
 }
 
+typedef struct {
+    int* queens;
+} gIndividual;
+
+gIndividual newIndividual(int* baseState) {
+    gIndividual ind;
+    ind.queens = malloc(sizeof(int) * nqueens);
+    memcpy(ind.queens, baseState, sizeof(int) * nqueens);
+    return ind;
+}
+
+int cmpIndividualByFitness(const void* a, const void* b) {
+    loadState(((gIndividual*)a)->queens);
+    int scoreA = countConflicts();
+    loadState(((gIndividual*)b)->queens);
+    int scoreB = countConflicts();
+    return scoreA - scoreB;
+}
+
+typedef struct {
+    int a;
+    int b;
+} CrossOverLocation;
+
+int generateNumberWithBias() {
+    return rand() % POPULATION_SIZE;
+}
+
+CrossOverLocation generateCrossOverLocation() {
+    CrossOverLocation loc;
+    loc.a = generateNumberWithBias();
+    do {
+        loc.b = generateNumberWithBias();
+    } while (loc.a == loc.b);
+
+    return loc;
+}
+
+void doCrossOver(gIndividual a, gIndividual b, gIndividual out) {
+    // Choose random location in the "string"
+    int randomLoc = rand() % (nqueens - 1) + 1;
+    // Copy A
+    memcpy(out.queens, a.queens, sizeof(int) * nqueens);
+    // Do crossover
+    if (rand() % 2) {
+        // Cross heads
+        for (int i = 0; i < randomLoc; i++) {
+            out.queens[i] = b.queens[i];
+        }
+    } else {
+        // Cross tails
+        for (int i = nqueens/2; i >= randomLoc; i--) {
+            out.queens[i] = b.queens[i];
+        }
+    }
+}
+
+void geneticAlgorithm() {
+    gIndividual populationA[POPULATION_SIZE];
+    gIndividual populationB[POPULATION_SIZE];
+    gIndividual* currentPopulation = populationA;
+    gIndividual* nextPopulation = populationB;
+
+    // Initialize the population with random boards
+    for (int i = 0; i < POPULATION_SIZE; i++) {
+        populationA[i] = newIndividual(queens);
+        populationB[i] = newIndividual(queens);
+        initiateQueens(1);
+    }
+
+    do {
+        // Sort population by their fitness in ascending order (0 is best)
+        qsort(currentPopulation, POPULATION_SIZE, sizeof(gIndividual), cmpIndividualByFitness);
+        // Check if we have a solution (fitness of idx 0 == 0)
+        loadState(currentPopulation[0].queens);
+        if (countConflicts() == 0) {
+            break;
+        }
+
+        // Do 8 crossovers and keep the 2 most fit ones
+        // Copy first 2
+        for (int i = 0; i < 2; i++) {
+            memcpy(nextPopulation[i].queens, currentPopulation[i].queens, sizeof(int) * nqueens);
+        }
+        // Crossover last POPULATION_SIZE - 2
+        for (int i = 2; i < POPULATION_SIZE; i++) {
+            CrossOverLocation location = generateCrossOverLocation();
+            doCrossOver(currentPopulation[location.a], currentPopulation[location.b],
+                        nextPopulation[i]);
+        }
+
+        // Apply mutations
+        for (int i = 1; i < POPULATION_SIZE; i++) {
+            int numberOfMutations = rand() % 3;
+            for (int nM = 0; nM < numberOfMutations; nM++) {
+                nextPopulation[i].queens[rand() % nqueens] = rand() % nqueens;
+            }
+        }
+
+        gIndividual* swap = currentPopulation;
+        currentPopulation = nextPopulation;
+        nextPopulation = swap;
+    } while (1);
+
+    printf ("Solved puzzle.\n");
+    printf ("Final state is");
+    printState();
+}
+
 
 int main(int argc, char *argv[]) {
   int algorithm;
@@ -336,9 +446,9 @@ int main(int argc, char *argv[]) {
 
   do {
     printf ("Algorithm: (1) Random search  (2) Hill climbing  ");
-    printf ("(3) Simulated Annealing: ");
+    printf ("(3) Simulated Annealing (4) Genetic Algorithm: ");
     scanf ("%d", &algorithm);
-  } while ((algorithm < 1) || (algorithm > 3));
+  } while ((algorithm < 1) || (algorithm > 4));
   
   initializeRandomGenerator();
 
@@ -351,6 +461,7 @@ int main(int argc, char *argv[]) {
   case 1: randomSearch();       break;
   case 2: hillClimbing();       break;
   case 3: simulatedAnnealing(); break;
+  case 4: geneticAlgorithm(); break;
   }
 
   return 0;  
