@@ -20,8 +20,8 @@ void initializeRandomGenerator() {
   /* this routine initializes the random generator. You are not
    * supposed to understand this code. You can simply use it.
    */
-  //time_t t;
-  //srand((unsigned) time(&t));
+	time_t t;
+	srand((unsigned) time(&t));
 }
 
 /* Generate an initial position.
@@ -353,8 +353,8 @@ double prop(int deltaE, double temperature){
 
 double calculateTemperature(int t, int timeMax) {
 	//return (1.0 - (double)t/timeMax) * 5;
-	double component = 1.0 - (double)t/timeMax;
-	return (component) * 25;
+	double component = 1.0 / (double)t;
+	return (component) * 1000;
 }
 
 double fRandom() {
@@ -362,7 +362,7 @@ double fRandom() {
 }
 
 void simulatedAnnealing() {
-	int t, deltaE, currentValue, timeMax = 10000;
+	int t, deltaE, currentValue, timeMax = 100000;
 	int nextState[nqueens], currentState[nqueens];
 
 	double temperature;
