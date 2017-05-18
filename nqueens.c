@@ -20,8 +20,8 @@ void initializeRandomGenerator() {
   /* this routine initializes the random generator. You are not
    * supposed to understand this code. You can simply use it.
    */
-  time_t t;
-  srand((unsigned) time(&t));
+  //time_t t;
+  //srand((unsigned) time(&t));
 }
 
 /* Generate an initial position.
@@ -230,6 +230,23 @@ int nextSuccessor() {
 //return(eval);
 //}
 
+
+void randomSuccessor(int* next){
+	//choosing a random row and column to change for the next state
+	int row = (rand() / (RAND_MAX / nqueens));
+	int column;
+	
+	for(int i = 0; i < nqueens; i++){
+		next[i] = queens[i];
+		if(i == row){
+			do{
+				column = (rand() / (RAND_MAX / nqueens));
+			}while(column == next[i]);
+			next[i] = column;
+		}
+	}
+}
+
 /*************************************************************/
 
 /* A very silly random search 'algorithm' */
@@ -330,10 +347,57 @@ void hillClimbing() {
 }
 /*************************************************************/
 
-void simulatedAnnealing() {
-  printf("Implement the routine simulatedAnnealing() yourself!!\n");
+double prop(int deltaE, double temperature){
+	return (exp(deltaE/temperature));
 }
 
+double calculateTemperature(int t, int timeMax) {
+	//return (1.0 - (double)t/timeMax) * 5;
+	double component = 1.0 - (double)t/timeMax;
+	return (component) * 25;
+}
+
+double fRandom() {
+	return rand()/(double)RAND_MAX;
+}
+
+void simulatedAnnealing() {
+	int t, deltaE, currentValue, timeMax = 10000;
+	int nextState[nqueens], currentState[nqueens];
+
+	double temperature;
+
+	for(t = 1; t < timeMax; t++){
+		saveState(currentState);
+		currentValue = evaluateState();
+		temperature = calculateTemperature(t, timeMax);
+		if(temperature == 0 || currentValue == (nqueens-1)*nqueens/2){
+			break;
+		}
+		
+		//Saving a successor of the current state in nextState
+		randomSuccessor(nextState);
+		loadState(nextState);
+		deltaE = evaluateState() - currentValue;
+		printf("prop: %lf - temperature: %lf - deltaE: %d\n", prop(deltaE, temperature), temperature, deltaE);
+		if(deltaE > 0){
+			loadState(nextState);
+		}else if(prop(deltaE, temperature) >= fRandom()){
+			loadState(nextState);
+		} else {
+			loadState(currentState);
+		}
+		
+	}
+	
+	printf ("Final state is");
+	printState();
+	printf("Conflicts %d\n", countConflicts());
+	printf ("Solved puzzle in %d iterations.\n", t);
+}
+
+
+/*************************************************************/
 typedef struct {
     int* queens;
 } gIndividual;
