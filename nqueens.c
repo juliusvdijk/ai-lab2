@@ -353,8 +353,8 @@ double prop(int deltaE, double temperature){
 
 double calculateTemperature(int t, int timeMax) {
 	//return (1.0 - (double)t/timeMax) * 5;
-	double component = 1.0 / (double)t;
-	return (component) * 1000;
+	//double component = 1.0 / ((double)t/timeMax);
+	return (1.0/t);
 }
 
 double fRandom() {
