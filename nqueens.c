@@ -266,7 +266,7 @@ void randomSearch() {
       /* change in random new location */
       newpos = pos;
       while (newpos == pos) {
-        newpos = random() % nqueens;
+        newpos = rand() % nqueens;
       }
       moveQueen(queen, newpos);
     }
