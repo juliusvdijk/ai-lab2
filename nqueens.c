@@ -171,7 +171,7 @@ int nextSuccessor() {
             queens[i] = nextPos;
             int newScore = evaluateState();
             // We have a 10% chance to throw away the current best move if the score is equal
-            if (newScore > score || (newScore == score && (moveQueenIdx == -1 || rand() < (RAND_MAX / 10)))) {
+            if (newScore > score || (newScore == score && (rand() < (RAND_MAX / 10)))) {
                 score = newScore;
                 moveQueenIdx = i;
                 moveQueenNewPos = nextPos;
@@ -190,45 +190,6 @@ int nextSuccessor() {
         return 1;
     }
 }
-
-//int nextSuccessor(){
-//	int currentState = evaluateState();
-//	int bestNextState = 0;
-//	int* bestSuccessor = malloc(sizeof(int) * nqueens);
-//	int oldQueenPosition, eval;
-//	int foundNextSuccessor = 1;
-//
-//	saveState(bestSuccessor);
-//	while(bestNextState){
-//		//printf("|");
-//		bestNextState = 0;
-//		foundNextSuccessor = 0;
-//		loadState(bestSuccessor);
-//		for(int i = 0; i < nqueens; i++){
-//			oldQueenPosition = queens[i];
-//			// making sure the position of the next successor is different
-//			while(queens[i] == oldQueenPosition){
-//				queens[i] = (rand() % nqueens);
-//			}
-//			eval = evaluateState();
-//			if(eval > bestNextState && eval > currentState){
-//				bestNextState = eval;
-//				saveState(bestSuccessor);
-//			}
-//			else if(eval == bestNextState && (rand() % 2)){
-//				saveState(bestSuccessor);
-//				bestNextState = eval;
-//			}
-//			queens[i] = oldQueenPosition;
-//		}
-//		if(bestNextState > currentState){
-//			currentState = bestNextState;
-//		}
-//	}
-//
-////printState();
-//return(eval);
-//}
 
 
 void randomSuccessor(int* next){
@@ -290,45 +251,6 @@ void printGen(int** Gen){
 
 }
 /*************************************************************/
-/*
-void hillClimbing() {
-	int successor = 0;
-	int** nextGen = malloc(sizeof(int *) * nqueens);
-	if(nextGen == NULL){
-		printf("Check your memory!\n");
-		abort();
-	}
-	for(int i = 0; i < nqueens; i++){
-		nextGen[i] = malloc(sizeof(int) * nqueens);
-		if(nextGen == NULL){
-			printf("Check your memory!\n");
-			abort();
-		}
-	}
-
-	while(successor != -1){
-		initializeNextGen(nextGen);
-		createNextGen(nextGen);
-
-		successor = evaluateBestNeighbour(nextGen);
-		if(successor != -1){
-			for(int i=0; i < nqueens; i++){
-				queens[i] = nextGen[successor][i];
-			}
-			
-			
-		}
-				
-
-	}
-	printf ("Solved puzzle.\n");
-	printf ("Final state is");
-	printState();
-
-}
-*/
-
-
 void hillClimbing() {
 	int eval, i;
 	eval = nextSuccessor();
@@ -354,6 +276,9 @@ double prop(int deltaE, double temperature){
 double calculateTemperature(int t, int timeMax) {
 	//return (1.0 - (double)t/timeMax) * 5;
 	//double component = 1.0 / ((double)t/timeMax);
+	
+	
+	//1.0/t is the best thus far
 	return (1.0/t);
 }
 
@@ -379,7 +304,6 @@ void simulatedAnnealing() {
 		randomSuccessor(nextState);
 		loadState(nextState);
 		deltaE = evaluateState() - currentValue;
-		printf("prop: %lf - temperature: %lf - deltaE: %d\n", prop(deltaE, temperature), temperature, deltaE);
 		if(deltaE > 0){
 			loadState(nextState);
 		}else if(prop(deltaE, temperature) >= fRandom()){
@@ -389,11 +313,11 @@ void simulatedAnnealing() {
 		}
 		
 	}
-	
-	printf ("Final state is");
-	printState();
 	printf("Conflicts %d\n", countConflicts());
 	printf ("Solved puzzle in %d iterations.\n", t);
+	printf ("Final state is");
+	printState();
+
 }
 
 
