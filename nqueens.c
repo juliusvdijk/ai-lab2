@@ -330,16 +330,18 @@ void hillClimbing() {
 
 
 void hillClimbing() {
-	int eval, i;
+	int eval, i, randomRestart=0;
 	eval = nextSuccessor();
 	for(i = 2; eval != ((nqueens-1)*nqueens/2) ; i++){
 		if (nextSuccessor() == 0) {
 			// Random restart
             initiateQueens(1);
+            randomRestart++;
 		}
 		eval = evaluateState();
 	}
 	printf ("Solved puzzle in %d iterations.\n", i);
+	printf ("Solved puzzle with %d random restarts.\n", randomRestart);
 	printf ("Final state is");
 	printState();
 
@@ -380,20 +382,17 @@ void simulatedAnnealing() {
 		loadState(nextState);
 		deltaE = evaluateState() - currentValue;
 		printf("prop: %lf - temperature: %lf - deltaE: %d\n", prop(deltaE, temperature), temperature, deltaE);
-		if(deltaE > 0){
-			loadState(nextState);
-		}else if(prop(deltaE, temperature) >= fRandom()){
-			loadState(nextState);
-		} else {
+		if(deltaE < 0 && prop(deltaE, temperature) < fRandom()){
 			loadState(currentState);
 		}
 		
 	}
 	
-	printf ("Final state is");
-	printState();
 	printf("Conflicts %d\n", countConflicts());
 	printf ("Solved puzzle in %d iterations.\n", t);
+	printf ("Final state is");
+	printState();
+
 }
 
 
