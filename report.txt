@@ -1,0 +1,2 @@
+Hillclimbing
+Our Hillclimbing algorithm makes use of the function nextSuccessor. This function returns 0 if there is no better successor, so then we have found a local minimum. And it return 1 if it has found a successor. If there is a better successor, this successor is saved in the global array queens.
