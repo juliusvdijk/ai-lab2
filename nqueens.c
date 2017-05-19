@@ -347,7 +347,19 @@ typedef struct {
 } CrossOverLocation;
 
 int generateNumberWithBias() {
-    return rand() % POPULATION_SIZE;
+    // We have 4 groups depending on the population size
+    // First group has a 50% chance, second group 20%, third group 20%, fourth group 10%
+    int rnd = rand() % 100;
+    int rndIndividual = rand() % (POPULATION_SIZE/4);
+    if (rnd < 50) {
+        return rndIndividual;
+    } else if (rnd < 70) {
+        return rndIndividual + (POPULATION_SIZE/4);
+    } else if (rnd < 90) {
+        return rndIndividual + (POPULATION_SIZE/4 * 2);
+    } else {
+        return rndIndividual + (POPULATION_SIZE/4 * 3);
+    }
 }
 
 CrossOverLocation generateCrossOverLocation() {
@@ -425,6 +437,11 @@ void geneticAlgorithm() {
         currentPopulation = nextPopulation;
         nextPopulation = swap;
     } while (1);
+
+    for (int i = 0; i < POPULATION_SIZE; i++) {
+        free(populationA[i].queens);
+        free(populationB[i].queens);
+    }
 
     printf ("Solved puzzle.\n");
     printf ("Final state is");
